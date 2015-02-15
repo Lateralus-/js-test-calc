@@ -67,6 +67,6 @@ describe('calc tests', function(){
 	});
 
 	it('should not allow replacing default operators', function() {
-		expect(calc.defineOperator('+', function() {})).toThrow('unable to replace default operator');
+		expect(function() { calc.defineOperator('+', function() {}) }).toThrow('unable to replace default operator');
 	});
 });
