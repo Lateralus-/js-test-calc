@@ -1,88 +1,65 @@
-﻿(function(){
-	
+﻿(function () {
 
-
-function Calc(){
-}
-
-Calc.prototype = {
-
-    preDefinedRegex: /(\d+)/g,
-    preDefinedOperators : ['+','-','/','*',],
-    argOne: 0,
-    argTwo: 0,
-    operatorMark: 0,
-    preDefinedContains: false,
-    solve: function(expr){
-        if(typeof expr === 'string')
-        {
-                var constantExpression = this.splitExpression(expr);
-                if(typeof constantExpression != 'undefined') return constantExpression;
-                if(this.preDefinedContains)
-                {
-                    return this.handleBaseOperators()
-                }
-                else
-                {
-                    var fn = Calc.prototype[this.operatorMark];
-                    if(typeof fn === 'function') {
-                        return fn(this.argOne,this.argTwo);
-                    }
-                }
-        }
-        else
-        {
-            throw 'input parameter must be value of string type';
-        }
-    },
-
-
-
-
-    defineOperator:function(operatorName, fn) {
-        if(this.preDefinedOperators.indexOf(operatorName) === -1)
-        {
-            if(typeof fn == 'function')
-            {
-                Calc.prototype[ operatorName ] =  fn;
-            }
-        }
-        else
-        {
-            throw 'unable to replace default operator';
-        }
-
-    },
-    handleBaseOperators: function(){
-        switch (this.operatorMark){
-            case "+": return this.argOne+this.argTwo;
-                break;
-            case "-": return this.argOne-this.argTwo;
-                break;
-            case "/": return this.argOne/this.argTwo;
-                break;
-            case "*": return this.argOne*this.argTwo;
-                break;
-            default:
-                break;
-
-        }
-    },
-    splitExpression: function(expr){
-        var expressionArray = expr.split(this.preDefinedRegex);
-        expressionArray.splice(0, 1);
-        expressionArray.splice(expressionArray.length-1, 1);
-
-        this.preDefinedContains = expressionArray.some(function(entry) {
-            if(entry) return Calc.prototype.preDefinedOperators.indexOf(entry) != -1
-
-        });
-        if(expressionArray.length===1) return eval(expr);
-        this.argOne = parseInt(expressionArray[0]);
-        this.argTwo = parseInt(expressionArray[2]);
-        this.operatorMark = expressionArray[1];
-
+    function Calc() {
     }
-}
-window.Calc = Calc;
+
+    Calc.prototype = {
+
+        calculate: {
+            '+': { exec: function(a, b) { return a + b; } },
+            '-': { exec: function(a, b) { return a - b; } },
+            '*': { exec: function(a, b) { return a * b; } },
+            '/': { exec: function(a, b) { return a / b; } }
+        },
+
+        solve: function (expr) {
+            if (typeof expr != 'string') {
+                throw 'input parameter must be value of string type';
+            }
+            else {
+                var parser = new Parser(expr);
+                if (parser.args.length == 1)
+                    return parser.args[0];
+                else {
+                    return this.calculate[parser.ops[0]].exec(parser.args[0], parser.args[1]);
+                }
+            }
+        },
+        defineOperator: function (expr, fn) {
+
+            if (this.calculate[expr] && !this.calculate[expr].isCustom) {
+                throw 'unable to replace default operator';
+            }
+            this.calculate[expr] = { exec: fn, isCustom: true };
+        }
+    }
+
+    function Parser(expr) {
+        this.args = [];
+        this.ops = [];
+        this.parse(expr);
+    }
+
+    Parser.prototype = {
+        args: [],
+        ops: [],
+        hasOnlyOperator: false,
+        parse: function (expr) {
+            var currentArg = [];
+            var numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            for (var i = 0; i < expr.length; i++) {
+                if (numbers.indexOf(expr.charAt(i)) > -1) {
+                    currentArg.push(numbers.indexOf(expr.charAt(i)));
+                }
+                else {
+                    this.args.push(parseInt(currentArg.join('')));
+                    this.ops.push(expr.charAt(i));
+                    if (currentArg.length === 0) this.hasOnlyOperator = true;
+                    currentArg = [];
+                }
+            }
+            this.args.push(parseInt(currentArg.join('')));
+        }
+    }
+    window.Calc = Calc;
 })();
